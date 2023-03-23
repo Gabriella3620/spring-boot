@@ -96,7 +96,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 
 	@Override
 	public String[] selectImports(AnnotationMetadata annotationMetadata) {
-		if (!isEnabled(annotationMetadata)) {
+		if (!isEnabled()) {
 			return NO_IMPORTS;
 		}
 		AutoConfigurationEntry autoConfigurationEntry = getAutoConfigurationEntry(annotationMetadata);
@@ -119,7 +119,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 	 * @return the auto-configurations that should be imported
 	 */
 	protected AutoConfigurationEntry getAutoConfigurationEntry(AnnotationMetadata annotationMetadata) {
-		if (!isEnabled(annotationMetadata)) {
+		if (!isEnabled()) {
 			return EMPTY_ENTRY;
 		}
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
@@ -138,7 +138,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		return AutoConfigurationGroup.class;
 	}
 
-	protected boolean isEnabled(AnnotationMetadata metadata) {
+	protected boolean isEnabled() {
 		if (getClass() == AutoConfigurationImportSelector.class) {
 			return getEnvironment().getProperty(EnableAutoConfiguration.ENABLED_OVERRIDE_PROPERTY, Boolean.class, true);
 		}
