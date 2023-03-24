@@ -84,35 +84,6 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 	}
 
 	@Override
-	protected final ConditionOutcome[] getOutcomes(String[] autoConfigurationClasses,
-			AutoConfigurationMetadata autoConfigurationMetadata) {
-		ConditionOutcome[] outcomes = new ConditionOutcome[autoConfigurationClasses.length];
-		for (int i = 0; i < outcomes.length; i++) {
-			String autoConfigurationClass = autoConfigurationClasses[i];
-			if (autoConfigurationClass != null) {
-				Set<String> onBeanTypes = autoConfigurationMetadata.getSet(autoConfigurationClass, "ConditionalOnBean");
-				outcomes[i] = getOutcome(onBeanTypes, ConditionalOnBean.class);
-				if (outcomes[i] == null) {
-					Set<String> onSingleCandidateTypes = autoConfigurationMetadata.getSet(autoConfigurationClass,
-							"ConditionalOnSingleCandidate");
-					outcomes[i] = getOutcome(onSingleCandidateTypes, ConditionalOnSingleCandidate.class);
-				}
-			}
-		}
-		return outcomes;
-	}
-
-	private ConditionOutcome getOutcome(Set<String> requiredBeanTypes, Class<? extends Annotation> annotation) {
-		List<String> missing = filter(requiredBeanTypes, ClassNameFilter.MISSING, getBeanClassLoader());
-		if (!missing.isEmpty()) {
-			ConditionMessage message = ConditionMessage.forCondition(annotation)
-					.didNotFind("required type", "required types").items(Style.QUOTE, missing);
-			return ConditionOutcome.noMatch(message);
-		}
-		return null;
-	}
-
-	@Override
 	public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
 		ConditionMessage matchMessage = ConditionMessage.empty();
 		MergedAnnotations annotations = metadata.getAnnotations();
@@ -164,6 +135,37 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 		}
 		return ConditionOutcome.match(matchMessage);
 	}
+	
+	@Override
+	protected final ConditionOutcome[] getOutcomes(String[] autoConfigurationClasses,
+			AutoConfigurationMetadata autoConfigurationMetadata) {
+		ConditionOutcome[] outcomes = new ConditionOutcome[autoConfigurationClasses.length];
+		for (int i = 0; i < outcomes.length; i++) {
+			String autoConfigurationClass = autoConfigurationClasses[i];
+			if (autoConfigurationClass != null) {
+				Set<String> onBeanTypes = autoConfigurationMetadata.getSet(autoConfigurationClass, "ConditionalOnBean");
+				outcomes[i] = getOutcome(onBeanTypes, ConditionalOnBean.class);
+				if (outcomes[i] == null) {
+					Set<String> onSingleCandidateTypes = autoConfigurationMetadata.getSet(autoConfigurationClass,
+							"ConditionalOnSingleCandidate");
+					outcomes[i] = getOutcome(onSingleCandidateTypes, ConditionalOnSingleCandidate.class);
+				}
+			}
+		}
+		return outcomes;
+	}
+
+	private ConditionOutcome getOutcome(Set<String> requiredBeanTypes, Class<? extends Annotation> annotation) {
+		List<String> missing = filter(requiredBeanTypes, ClassNameFilter.MISSING, getBeanClassLoader());
+		if (!missing.isEmpty()) {
+			ConditionMessage message = ConditionMessage.forCondition(annotation)
+					.didNotFind("required type", "required types").items(Style.QUOTE, missing);
+			return ConditionOutcome.noMatch(message);
+		}
+		return null;
+	}
+
+
 
 	protected final MatchResult getMatchingBeans(ConditionContext context, Spec<?> spec) {
 		ClassLoader classLoader = context.getClassLoader();
@@ -443,6 +445,33 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 			this.types = types;
 			validate(deductionException);
 		}
+		@Override
+		public String toString() {
+			boolean hasNames = !this.names.isEmpty();
+			boolean hasTypes = !this.types.isEmpty();
+			boolean hasIgnoredTypes = !this.ignoredTypes.isEmpty();
+			StringBuilder string = new StringBuilder();
+			string.append("(");
+			if (hasNames) {
+				string.append("names: ");
+				string.append(StringUtils.collectionToCommaDelimitedString(this.names));
+				string.append(hasTypes ? " " : "; ");
+			}
+			if (hasTypes) {
+				string.append("types: ");
+				string.append(StringUtils.collectionToCommaDelimitedString(this.types));
+				string.append(hasIgnoredTypes ? " " : "; ");
+			}
+			if (hasIgnoredTypes) {
+				string.append("ignored: ");
+				string.append(StringUtils.collectionToCommaDelimitedString(this.ignoredTypes));
+				string.append("; ");
+			}
+			string.append("SearchStrategy: ");
+			string.append(this.strategy.toString().toLowerCase(Locale.ENGLISH));
+			string.append(")");
+			return string.toString();
+		}
 
 		protected Set<String> extractTypes(MultiValueMap<String, Object> attributes) {
 			return extract(attributes, "value", "type");
@@ -604,33 +633,6 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 			return message.andCondition(this.annotationType, this);
 		}
 
-		@Override
-		public String toString() {
-			boolean hasNames = !this.names.isEmpty();
-			boolean hasTypes = !this.types.isEmpty();
-			boolean hasIgnoredTypes = !this.ignoredTypes.isEmpty();
-			StringBuilder string = new StringBuilder();
-			string.append("(");
-			if (hasNames) {
-				string.append("names: ");
-				string.append(StringUtils.collectionToCommaDelimitedString(this.names));
-				string.append(hasTypes ? " " : "; ");
-			}
-			if (hasTypes) {
-				string.append("types: ");
-				string.append(StringUtils.collectionToCommaDelimitedString(this.types));
-				string.append(hasIgnoredTypes ? " " : "; ");
-			}
-			if (hasIgnoredTypes) {
-				string.append("ignored: ");
-				string.append(StringUtils.collectionToCommaDelimitedString(this.ignoredTypes));
-				string.append("; ");
-			}
-			string.append("SearchStrategy: ");
-			string.append(this.strategy.toString().toLowerCase(Locale.ENGLISH));
-			string.append(")");
-			return string.toString();
-		}
 
 	}
 
