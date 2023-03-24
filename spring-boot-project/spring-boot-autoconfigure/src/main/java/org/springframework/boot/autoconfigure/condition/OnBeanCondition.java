@@ -75,6 +75,8 @@ import org.springframework.util.StringUtils;
  */
 @Order(Ordered.LOWEST_PRECEDENCE)
 class OnBeanCondition extends FilteringSpringBootCondition implements ConfigurationCondition {
+	private static final String AND = " and ";
+
 
 	@Override
 	public ConfigurationPhase getConfigurationPhase() {
@@ -312,7 +314,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 	private void appendMessageForNoMatches(StringBuilder reason, Collection<String> unmatched, String description) {
 		if (!unmatched.isEmpty()) {
 			if (reason.length() > 0) {
-				reason.append(" and ");
+				reason.append(AND);
 			}
 			reason.append("did not find any beans ");
 			reason.append(description);
@@ -327,7 +329,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 		appendMessageForMatches(reason, matchResult.getMatchedTypes(), "of type");
 		if (!matchResult.getMatchedNames().isEmpty()) {
 			if (reason.length() > 0) {
-				reason.append(" and ");
+				reason.append(AND);
 			}
 			reason.append("found beans named ");
 			reason.append(StringUtils.collectionToDelimitedString(matchResult.getMatchedNames(), ", "));
@@ -340,7 +342,7 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 		if (!matches.isEmpty()) {
 			matches.forEach((key, value) -> {
 				if (reason.length() > 0) {
-					reason.append(" and ");
+					reason.append(AND);
 				}
 				reason.append("found beans ");
 				reason.append(description);
