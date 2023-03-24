@@ -42,6 +42,10 @@ import org.springframework.context.annotation.Import;
  * @author Andy Wilkinson
  */
 class ElasticsearchClientConfigurations {
+	  private ElasticsearchClientConfigurations() {
+    throw new IllegalStateException("Utility class");
+  }
+
 
 	@ConditionalOnMissingBean(JsonpMapper.class)
 	@ConditionalOnBean(ObjectMapper.class)
