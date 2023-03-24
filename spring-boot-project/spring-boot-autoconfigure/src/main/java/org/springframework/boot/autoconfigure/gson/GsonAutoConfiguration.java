@@ -76,20 +76,20 @@ public class GsonAutoConfiguration {
 
 		@Override
 		public void customize(GsonBuilder builder) {
-			GsonProperties properties = this.properties;
+			GsonProperties referenceProperties  = this.properties;
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
-			map.from(properties::getGenerateNonExecutableJson).toCall(builder::generateNonExecutableJson);
+			map.from(referenceProperties ::getGenerateNonExecutableJson).toCall(builder::generateNonExecutableJson);
 			map.from(properties::getExcludeFieldsWithoutExposeAnnotation)
 					.toCall(builder::excludeFieldsWithoutExposeAnnotation);
-			map.from(properties::getSerializeNulls).whenTrue().toCall(builder::serializeNulls);
-			map.from(properties::getEnableComplexMapKeySerialization).toCall(builder::enableComplexMapKeySerialization);
-			map.from(properties::getDisableInnerClassSerialization).toCall(builder::disableInnerClassSerialization);
-			map.from(properties::getLongSerializationPolicy).to(builder::setLongSerializationPolicy);
-			map.from(properties::getFieldNamingPolicy).to(builder::setFieldNamingPolicy);
-			map.from(properties::getPrettyPrinting).toCall(builder::setPrettyPrinting);
-			map.from(properties::getLenient).toCall(builder::setLenient);
-			map.from(properties::getDisableHtmlEscaping).toCall(builder::disableHtmlEscaping);
-			map.from(properties::getDateFormat).to(builder::setDateFormat);
+			map.from(referenceProperties ::getSerializeNulls).whenTrue().toCall(builder::serializeNulls);
+			map.from(referenceProperties ::getEnableComplexMapKeySerialization).toCall(builder::enableComplexMapKeySerialization);
+			map.from(referenceProperties ::getDisableInnerClassSerialization).toCall(builder::disableInnerClassSerialization);
+			map.from(referenceProperties ::getLongSerializationPolicy).to(builder::setLongSerializationPolicy);
+			map.from(referenceProperties ::getFieldNamingPolicy).to(builder::setFieldNamingPolicy);
+			map.from(referenceProperties ::getPrettyPrinting).toCall(builder::setPrettyPrinting);
+			map.from(referenceProperties ::getLenient).toCall(builder::setLenient);
+			map.from(referenceProperties ::getDisableHtmlEscaping).toCall(builder::disableHtmlEscaping);
+			map.from(referenceProperties ::getDateFormat).to(builder::setDateFormat);
 		}
 
 	}
