@@ -79,7 +79,7 @@ public class GsonAutoConfiguration {
 			GsonProperties referenceProperties  = this.properties;
 			PropertyMapper map = PropertyMapper.get().alwaysApplyingWhenNonNull();
 			map.from(referenceProperties ::getGenerateNonExecutableJson).toCall(builder::generateNonExecutableJson);
-			map.from(properties::getExcludeFieldsWithoutExposeAnnotation)
+			map.from(referenceProperties::getExcludeFieldsWithoutExposeAnnotation)
 					.toCall(builder::excludeFieldsWithoutExposeAnnotation);
 			map.from(referenceProperties ::getSerializeNulls).whenTrue().toCall(builder::serializeNulls);
 			map.from(referenceProperties ::getEnableComplexMapKeySerialization).toCall(builder::enableComplexMapKeySerialization);
