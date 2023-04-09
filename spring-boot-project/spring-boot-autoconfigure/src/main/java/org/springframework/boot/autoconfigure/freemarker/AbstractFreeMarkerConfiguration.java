@@ -47,4 +47,7 @@ abstract class AbstractFreeMarkerConfiguration {
 		factory.setFreemarkerSettings(settings);
 	}
 
+	protected abstract FreeMarkerViewResolver freeMarkerViewResolver();
+
+
 }
