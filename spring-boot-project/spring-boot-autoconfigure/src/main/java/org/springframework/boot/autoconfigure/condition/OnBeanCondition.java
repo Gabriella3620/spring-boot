@@ -154,58 +154,80 @@ class OnBeanCondition extends FilteringSpringBootCondition implements Configurat
 
 
 	protected final MatchResult getMatchingBeans(ConditionContext context, Spec<?> spec) {
+
 		ClassLoader classLoader = context.getClassLoader();
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
 		boolean considerHierarchy = spec.getStrategy() != SearchStrategy.CURRENT;
 		Set<Class<?>> parameterizedContainers = spec.getParameterizedContainers();
+
+
 		if (spec.getStrategy() == SearchStrategy.ANCESTORS) {
-			BeanFactory parent = beanFactory.getParentBeanFactory();
-			Assert.isInstanceOf(ConfigurableListableBeanFactory.class, parent,
-					"Unable to use SearchStrategy.ANCESTORS");
-			beanFactory = (ConfigurableListableBeanFactory) parent;
+			
+			beanFactory = getParentBeanFactory(beanFactory);
 		}
 		MatchResult result = new MatchResult();
 		Set<String> beansIgnoredByType = getNamesOfBeansIgnoredByType(classLoader, beanFactory, considerHierarchy,
 				spec.getIgnoredTypes(), parameterizedContainers);
-		for (String type : spec.getTypes()) {
-			Collection<String> typeMatches = getBeanNamesForType(classLoader, considerHierarchy, beanFactory, type,
-					parameterizedContainers);
-			Iterator<String> iterator = typeMatches.iterator();
-			while (iterator.hasNext()) {
-				String match = iterator.next();
-				if (beansIgnoredByType.contains(match) || ScopedProxyUtils.isScopedTarget(match)) {
-					iterator.remove();
-				}
-			}
-			if (typeMatches.isEmpty()) {
-				result.recordUnmatchedType(type);
-			}
-			else {
-				result.recordMatchedType(type, typeMatches);
-			}
-		}
-		for (String annotation : spec.getAnnotations()) {
-			Set<String> annotationMatches = getBeanNamesForAnnotation(classLoader, beanFactory, annotation,
-					considerHierarchy);
-			annotationMatches.removeAll(beansIgnoredByType);
-			if (annotationMatches.isEmpty()) {
-				result.recordUnmatchedAnnotation(annotation);
-			}
-			else {
-				result.recordMatchedAnnotation(annotation, annotationMatches);
-			}
-		}
-		for (String beanName : spec.getNames()) {
-			if (!beansIgnoredByType.contains(beanName) && containsBean(beanFactory, beanName, considerHierarchy)) {
-				result.recordMatchedName(beanName);
-			}
-			else {
-				result.recordUnmatchedName(beanName);
-			}
-		}
-		return result;
+
+		getMatchesForTypes(context.getClassLoader(), considerHierarchy, beanFactory, spec.getTypes(),
+		        parameterizedContainers, beansIgnoredByType, result);
+
+		getMatchesForAnnotations(context.getClassLoader(), beanFactory, spec.getAnnotations(),
+		        considerHierarchy, beansIgnoredByType, result);
+
+		getMatchesForNames(beanFactory, spec.getNames(), considerHierarchy, beansIgnoredByType, result);
+
+		  return result;
 	}
 
+	private ConfigurableListableBeanFactory getParentBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+		BeanFactory parent = beanFactory.getParentBeanFactory();
+		Assert.isInstanceOf(ConfigurableListableBeanFactory.class, parent, "Unable to use SearchStrategy.ANCESTORS");
+		return (ConfigurableListableBeanFactory) parent;
+	  }
+
+	private void getMatchesForTypes(ClassLoader classLoader, boolean considerHierarchy,
+				ConfigurableListableBeanFactory beanFactory, Set<String> types, Set<Class<?>> parameterizedContainers, Set<String> beansIgnoredByType, MatchResult result) {
+			for (String type : types) {
+			Collection<String> typeMatches = getBeanNamesForType(classLoader, considerHierarchy, beanFactory, type,
+			parameterizedContainers);
+			typeMatches.removeIf(match -> beansIgnoredByType.contains(match) || ScopedProxyUtils.isScopedTarget(match));
+
+			if (typeMatches.isEmpty()) {
+			result.recordUnmatchedType(type);
+			} else {
+			result.recordMatchedType(type, typeMatches);
+					}
+                                    }
+				}
+    
+	
+	private void getMatchesForAnnotations(ClassLoader classLoader, ConfigurableListableBeanFactory beanFactory,
+					Set<String> annotations, boolean considerHierarchy,
+						Set<String> beansIgnoredByType, MatchResult result) {
+			for (String annotation : annotations) {
+			Set<String> annotationMatches = getBeanNamesForAnnotation(classLoader, beanFactory, annotation,
+			considerHierarchy);
+			annotationMatches.removeAll(beansIgnoredByType);
+
+			if (annotationMatches.isEmpty()) {
+			result.recordUnmatchedAnnotation(annotation);
+			} else {
+			result.recordMatchedAnnotation(annotation, annotationMatches);
+			        }
+		}
+		}
+
+	private void getMatchesForNames(ConfigurableListableBeanFactory beanFactory, Set<String> names,
+				boolean considerHierarchy, Set<String> beansIgnoredByType, MatchResult result) {
+			for (String beanName : names) {
+			if (!beansIgnoredByType.contains(beanName) && containsBean(beanFactory, beanName, considerHierarchy)) {
+			result.recordMatchedName(beanName);
+			} else {
+			result.recordUnmatchedName(beanName);
+			       }
+	}
+	}
 	private Set<String> getNamesOfBeansIgnoredByType(ClassLoader classLoader, ListableBeanFactory beanFactory,
 			boolean considerHierarchy, Set<String> ignoredTypes, Set<Class<?>> parameterizedContainers) {
 		Set<String> result = null;
