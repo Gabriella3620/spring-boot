@@ -63,16 +63,15 @@ import org.springframework.util.CollectionUtils;
  * @author Mushtaq Ahmed
  */
 @Configuration(proxyBeanMethods = false)
-class OAuth2ResourceServerJwtConfiguration {
+class OAuth2ResourceServerJwtConfiguration extends AbstractResourceServerAutoConfiguration  {
 
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnMissingBean(JwtDecoder.class)
-	static class JwtDecoderConfiguration {
+	static class JwtDecoderConfiguration extends AbstractJwtConfiguration {
 
-		private final OAuth2ResourceServerProperties.Jwt properties;
 
 		JwtDecoderConfiguration(OAuth2ResourceServerProperties properties) {
-			this.properties = properties.getJwt();
+			super(properties);
 		}
 
 		@Bean
@@ -87,24 +86,7 @@ class OAuth2ResourceServerJwtConfiguration {
 			return nimbusJwtDecoder;
 		}
 
-		private void jwsAlgorithms(Set<SignatureAlgorithm> signatureAlgorithms) {
-			for (String algorithm : this.properties.getJwsAlgorithms()) {
-				signatureAlgorithms.add(SignatureAlgorithm.from(algorithm));
-			}
-		}
-
-		private OAuth2TokenValidator<Jwt> getValidators(Supplier<OAuth2TokenValidator<Jwt>> defaultValidator) {
-			OAuth2TokenValidator<Jwt> defaultValidators = defaultValidator.get();
-			List<String> audiences = this.properties.getAudiences();
-			if (CollectionUtils.isEmpty(audiences)) {
-				return defaultValidators;
-			}
-			List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
-			validators.add(defaultValidators);
-			validators.add(new JwtClaimValidator<List<String>>(JwtClaimNames.AUD,
-					(aud) -> aud != null && !Collections.disjoint(aud, audiences)));
-			return new DelegatingOAuth2TokenValidator<>(validators);
-		}
+		
 
 		@Bean
 		@Conditional(KeyValueCondition.class)
@@ -115,22 +97,6 @@ class OAuth2ResourceServerJwtConfiguration {
 					.signatureAlgorithm(SignatureAlgorithm.from(exactlyOneAlgorithm())).build();
 			jwtDecoder.setJwtValidator(getValidators(JwtValidators::createDefault));
 			return jwtDecoder;
-		}
-
-		private byte[] getKeySpec(String keyValue) {
-			keyValue = keyValue.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");
-			return Base64.getMimeDecoder().decode(keyValue);
-		}
-
-		private String exactlyOneAlgorithm() {
-			List<String> algorithms = this.properties.getJwsAlgorithms();
-			int count = (algorithms != null) ? algorithms.size() : 0;
-			if (count != 1) {
-				throw new IllegalStateException(
-						"Creating a JWT decoder using a public key requires exactly one JWS algorithm but " + count
-								+ " were configured");
-			}
-			return algorithms.get(0);
 		}
 
 		@Bean

@@ -63,47 +63,15 @@ import org.springframework.util.CollectionUtils;
  * @author Mushtaq Ahmed
  */
 @Configuration(proxyBeanMethods = false)
-class ReactiveOAuth2ResourceServerJwkConfiguration {
+class ReactiveOAuth2ResourceServerJwkConfiguration extends  AbstractResourceServerAutoConfiguration {
 
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnMissingBean(ReactiveJwtDecoder.class)
-	static class JwtConfiguration {
+	static class JwtConfiguration extends AbstractJwtConfiguration  {
 
-		private final OAuth2ResourceServerProperties.Jwt properties;
 
 		JwtConfiguration(OAuth2ResourceServerProperties properties) {
-			this.properties = properties.getJwt();
-		}
-
-		@Bean
-		@ConditionalOnProperty(name = "spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
-		ReactiveJwtDecoder jwtDecoder() {
-			NimbusReactiveJwtDecoder nimbusReactiveJwtDecoder = NimbusReactiveJwtDecoder
-					.withJwkSetUri(this.properties.getJwkSetUri()).jwsAlgorithms(this::jwsAlgorithms).build();
-			String issuerUri = this.properties.getIssuerUri();
-			Supplier<OAuth2TokenValidator<Jwt>> defaultValidator = (issuerUri != null)
-					? () -> JwtValidators.createDefaultWithIssuer(issuerUri) : JwtValidators::createDefault;
-			nimbusReactiveJwtDecoder.setJwtValidator(getValidators(defaultValidator));
-			return nimbusReactiveJwtDecoder;
-		}
-
-		private void jwsAlgorithms(Set<SignatureAlgorithm> signatureAlgorithms) {
-			for (String algorithm : this.properties.getJwsAlgorithms()) {
-				signatureAlgorithms.add(SignatureAlgorithm.from(algorithm));
-			}
-		}
-
-		private OAuth2TokenValidator<Jwt> getValidators(Supplier<OAuth2TokenValidator<Jwt>> defaultValidator) {
-			OAuth2TokenValidator<Jwt> defaultValidators = defaultValidator.get();
-			List<String> audiences = this.properties.getAudiences();
-			if (CollectionUtils.isEmpty(audiences)) {
-				return defaultValidators;
-			}
-			List<OAuth2TokenValidator<Jwt>> validators = new ArrayList<>();
-			validators.add(defaultValidators);
-			validators.add(new JwtClaimValidator<List<String>>(JwtClaimNames.AUD,
-					(aud) -> aud != null && !Collections.disjoint(aud, audiences)));
-			return new DelegatingOAuth2TokenValidator<>(validators);
+			super(properties);
 		}
 
 		@Bean
@@ -115,22 +83,6 @@ class ReactiveOAuth2ResourceServerJwkConfiguration {
 					.signatureAlgorithm(SignatureAlgorithm.from(exactlyOneAlgorithm())).build();
 			jwtDecoder.setJwtValidator(getValidators(JwtValidators::createDefault));
 			return jwtDecoder;
-		}
-
-		private byte[] getKeySpec(String keyValue) {
-			keyValue = keyValue.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "");
-			return Base64.getMimeDecoder().decode(keyValue);
-		}
-
-		private String exactlyOneAlgorithm() {
-			List<String> algorithms = this.properties.getJwsAlgorithms();
-			int count = (algorithms != null) ? algorithms.size() : 0;
-			if (count != 1) {
-				throw new IllegalStateException(
-						"Creating a JWT decoder using a public key requires exactly one JWS algorithm but " + count
-								+ " were configured");
-			}
-			return algorithms.get(0);
 		}
 
 		@Bean
