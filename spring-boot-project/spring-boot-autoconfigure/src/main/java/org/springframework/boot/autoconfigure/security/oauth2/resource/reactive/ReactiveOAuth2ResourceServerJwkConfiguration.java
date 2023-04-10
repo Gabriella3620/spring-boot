@@ -73,17 +73,41 @@ class ReactiveOAuth2ResourceServerJwkConfiguration extends  AbstractResourceServ
 		JwtConfiguration(OAuth2ResourceServerProperties properties) {
 			super(properties);
 		}
+		@Bean
+		@ConditionalOnProperty(name = "spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
+		ReactiveJwtDecoder jwtDecoder() {
+			templateMethodjwtDecoderBy();
+			return nimbusReactiveJwtDecoder;
+		}
+
 
 		@Bean
 		@Conditional(KeyValueCondition.class)
 		NimbusReactiveJwtDecoder jwtDecoderByPublicKeyValue() throws Exception {
-			RSAPublicKey publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA")
-					.generatePublic(new X509EncodedKeySpec(getKeySpec(this.properties.readPublicKey())));
-			NimbusReactiveJwtDecoder jwtDecoder = NimbusReactiveJwtDecoder.withPublicKey(publicKey)
-					.signatureAlgorithm(SignatureAlgorithm.from(exactlyOneAlgorithm())).build();
-			jwtDecoder.setJwtValidator(getValidators(JwtValidators::createDefault));
-			return jwtDecoder;
+			templateMethodDecoderByPublicKeyValue();
+			return nimbusReactiveJwtDecoder;
 		}
+
+
+		void setJwtDecoder(){
+			nimbusReactiveJwtDecoder = NimbusReactiveJwtDecoder.withPublicKey(publicKey)
+					.signatureAlgorithm(SignatureAlgorithm.from(exactlyOneAlgorithm())).build();
+			nimbusReactiveJwtDecoder.setJwtValidator(getValidators(JwtValidators::createDefault));
+
+
+		}
+		void setJwtUri(){
+			nimbusReactiveJwtDecoder = NimbusReactiveJwtDecoder
+					.withJwkSetUri(this.properties.getJwkSetUri()).jwsAlgorithms(this::jwsAlgorithms).build();
+
+		}
+		void setJwtDecoderValidator(){
+
+			nimbusReactiveJwtDecoder.setJwtValidator(super.getValidators(defaultValidator));
+
+		}
+
+	
 
 		@Bean
 		@Conditional(IssuerUriCondition.class)

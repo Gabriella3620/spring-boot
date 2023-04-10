@@ -17,13 +17,12 @@ public abstract class  AbstractResourceServerAutoConfiguration {
 
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnMissingBean(JwtDecoder.class)
-	static class AbstractJwtConfiguration {
+	static  abstract  class AbstractJwtConfiguration {
 		private final OAuth2ResourceServerProperties.Jwt properties;
 
 		AbstractJwtConfiguration(OAuth2ResourceServerProperties properties) {
 			this.properties = properties.getJwt();
 		}
-
 
 
 		protected void jwsAlgorithms(Set<SignatureAlgorithm> signatureAlgorithms) {
@@ -62,6 +61,31 @@ public abstract class  AbstractResourceServerAutoConfiguration {
 			}
 			return algorithms.get(0);
 		}
+
+		protected void templateMethodDecoderByPublicKeyValue() throws Exception {
+			RSAPublicKey publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA")
+					.generatePublic(new X509EncodedKeySpec(getKeySpec(this.properties.readPublicKey())));
+	      setJwtDecoder();
+
+
+		};
+
+		protected void templateMethodjwtDecoderBy(){
+			setJwtUri();
+			String issuerUri = this.properties.getIssuerUri();
+			Supplier<OAuth2TokenValidator<Jwt>> defaultValidator = (issuerUri != null)
+					? () -> JwtValidators.createDefaultWithIssuer(issuerUri) : JwtValidators::createDefault;
+
+			setJwtDecoderValidator();
+		}
+
+		abstract  void  setJwtDecoder();
+
+		abstract void setJwtUri();
+
+	   abstract void setJwtDecoderValidator();
+
+
 
 		
 

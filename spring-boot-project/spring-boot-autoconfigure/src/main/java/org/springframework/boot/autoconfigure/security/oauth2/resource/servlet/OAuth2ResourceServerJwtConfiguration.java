@@ -68,7 +68,8 @@ class OAuth2ResourceServerJwtConfiguration extends AbstractResourceServerAutoCon
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnMissingBean(JwtDecoder.class)
 	static class JwtDecoderConfiguration extends AbstractJwtConfiguration {
-
+      
+		private NimbusJwtDecoder nimbusJwtDecoder;
 
 		JwtDecoderConfiguration(OAuth2ResourceServerProperties properties) {
 			super(properties);
@@ -77,27 +78,27 @@ class OAuth2ResourceServerJwtConfiguration extends AbstractResourceServerAutoCon
 		@Bean
 		@ConditionalOnProperty(name = "spring.security.oauth2.resourceserver.jwt.jwk-set-uri")
 		JwtDecoder jwtDecoderByJwkKeySetUri() {
-			NimbusJwtDecoder nimbusJwtDecoder = NimbusJwtDecoder.withJwkSetUri(this.properties.getJwkSetUri())
-					.jwsAlgorithms(this::jwsAlgorithms).build();
-			String issuerUri = this.properties.getIssuerUri();
-			Supplier<OAuth2TokenValidator<Jwt>> defaultValidator = (issuerUri != null)
-					? () -> JwtValidators.createDefaultWithIssuer(issuerUri) : JwtValidators::createDefault;
-			nimbusJwtDecoder.setJwtValidator(getValidators(defaultValidator));
+			templateMethodjwtDecoderBy();
 			return nimbusJwtDecoder;
 		}
 
-		
-
 		@Bean
 		@Conditional(KeyValueCondition.class)
-		JwtDecoder jwtDecoderByPublicKeyValue() throws Exception {
-			RSAPublicKey publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA")
-					.generatePublic(new X509EncodedKeySpec(getKeySpec(this.properties.readPublicKey())));
-			NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(publicKey)
-					.signatureAlgorithm(SignatureAlgorithm.from(exactlyOneAlgorithm())).build();
-			jwtDecoder.setJwtValidator(getValidators(JwtValidators::createDefault));
-			return jwtDecoder;
+		JwtDecoder  jwtDecoderByPublicKeyValue() throws Exception {
+			templateMethodDecoderByPublicKeyValue();
+			return nimbusJwtDecoder;
 		}
+
+		void setJwtUri(){
+			nimbusJwtDecoder = NimbusJwtDecoder.withJwkSetUri(this.properties.getJwkSetUri())
+					.jwsAlgorithms(this::jwsAlgorithms).build();
+		}
+		void setJwtDecoderValidator(){
+			nimbusJwtDecoder.setJwtValidator(super.getValidators(defaultValidator));
+
+		}
+		
+
 
 		@Bean
 		@Conditional(IssuerUriCondition.class)
