@@ -10,7 +10,6 @@ sonar {
     property "sonar.projectKey", "Gabriella3620_spring-boot"
     property "sonar.organization", "gabriella3620"
     property "sonar.host.url", "https://sonarcloud.io"
-    property "sonar.sources", "spring-boot/spring-boot-project/spring-boot-starters/spring-boot-starter-data-jpa/"
 
   }
 }
