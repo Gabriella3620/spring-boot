@@ -1,7 +1,19 @@
 plugins {
 	id "org.springframework.boot.starter"
 }
+plugins {
+  id "org.sonarqube" version "4.4.1.3373"
+}
 
+sonar {
+  properties {
+    property "sonar.projectKey", "Gabriella3620_spring-boot"
+    property "sonar.organization", "gabriella3620"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.sources", "spring-boot/spring-boot-project/spring-boot-starters/spring-boot-starter-data-jpa/"
+
+  }
+}
 description = "Starter for using Spring Data JPA with Hibernate"
 
 dependencies {
